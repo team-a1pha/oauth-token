@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access Token Viewer</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+      font-family: Arial, sans-serif;
+    }
+    #tokenBox {
+      background-color: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      font-size: 20px;
+      max-width: 80%;
+      text-align: center;
+      word-break: break-all;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    #tokenBox:hover {
+      background-color: #e0f7fa;
+    }
+  </style>
+</head>
+<body>
+  <div id="tokenBox">Loading token...</div>
+
+  <script>
+    // Extract access_token from location.hash
+    function getAccessTokenFromHash() {
+      const hash = window.location.hash.substring(1); // Remove the '#'
+      const params = new URLSearchParams(hash);
+      return params.get('access_token');
+    }
+
+    const tokenBox = document.getElementById('tokenBox');
+    const accessToken = getAccessTokenFromHash();
+
+    if (accessToken) {
+      tokenBox.textContent = accessToken;
+    } else {
+      tokenBox.textContent = 'No access_token found in URL hash.';
+    }
+
+    // Copy token to clipboard on click
+    tokenBox.addEventListener('click', () => {
+      if (accessToken) {
+        navigator.clipboard.writeText(accessToken)
+          .then(() => {
+            alert('Access token copied to clipboard!');
+          })
+          .catch(err => {
+            alert('Failed to copy: ' + err);
+          });
+      }
+    });
+  </script>
+</body>
+</html>
