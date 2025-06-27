@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Access Token Viewer</title>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
   <style>
     body {
       display: flex;
@@ -36,6 +37,7 @@
   <h1>Access Token</h1>
   <div id="tokenBox">Loading token...</div>
 
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script>
     // Extract access_token from location.hash
     function getAccessTokenFromHash() {
@@ -58,10 +60,10 @@
       if (accessToken) {
         navigator.clipboard.writeText(accessToken)
           .then(() => {
-            alert('Access token copied to clipboard!');
+            Toastify({ text: "Access token copied", duration: 3000 }).showToast();
           })
           .catch(err => {
-            alert('Failed to copy: ' + err);
+            Toastify({ text: `Failed to copy: ${err}`, duration: 3000 }).showToast();
           });
       }
     });
