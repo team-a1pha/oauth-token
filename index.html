@@ -49,12 +49,14 @@
       const params = new URLSearchParams(hash);
       return {
         accessToken: params.get('access_token'),
-        expiresIn: params.get('expires_in')
+        expiresIn: params.get('expires_in'),
+        state: params.get('state') // Extract start_time from 'state'
       };
     }
 
     const tokenBox = document.getElementById('tokenBox');
-    const { accessToken, expiresIn } = getTokenDataFromHash();
+    // Destructure state (as startTime) along with accessToken and expiresIn
+    const { accessToken, expiresIn, state: startTime } = getTokenDataFromHash();
 
     if (accessToken) {
       tokenBox.textContent = accessToken;
@@ -62,9 +64,15 @@
       tokenBox.textContent = 'No access_token found in URL hash.';
     }
 
-    if (expiresIn) {
-      const now = new Date();
-      const expiryTime = new Date(now.getTime() + expiresIn * 1000);
+    // Check if expiresIn and startTime (from state) are available
+    if (expiresIn && startTime) {
+      // Convert startTime from string (milliseconds) to number
+      const startTimeMs = parseInt(startTime, 10);
+      // Convert expiresIn from string (seconds) to number (milliseconds)
+      const expiresInMs = parseInt(expiresIn, 10) * 1000;
+
+      // Calculate expiryTime using startTimeMs
+      const expiryTime = new Date(startTimeMs + expiresInMs);
       const hours = expiryTime.getHours().toString().padStart(2, '0');
       const minutes = expiryTime.getMinutes().toString().padStart(2, '0');
       const expiryTimeString = `Valid until ${hours}:${minutes}`;
