@@ -69,10 +69,8 @@
     const expiryTimeElement = document.getElementById('token-expiry-time'); // Renamed from 'valid_until' for consistency with existing id
     const { accessToken, expiresIn } = getTokenDataFromHash();
 
-    if (accessToken) {
-      tokenBox.textContent = accessToken;
-
-      if (expiresIn) {
+    function updateTokenExpiryStatus() {
+      if (accessToken && expiresIn) {
         const tokenKey = simpleHash(accessToken);
         let startTimeMs = localStorage.getItem(tokenKey);
 
@@ -97,14 +95,28 @@
           expiryTimeElement.textContent = `Expired on ${hours}:${minutes}`;
           expiryTimeElement.style.color = 'red';
         }
-      } else {
+      } else if (accessToken) {
         expiryTimeElement.textContent = 'expires_in not found in URL hash.';
         expiryTimeElement.style.color = 'orange';
+      } else {
+        expiryTimeElement.textContent = ''; // Clear expiry text if no token
       }
+    }
+
+    if (accessToken) {
+      tokenBox.textContent = accessToken;
     } else {
       tokenBox.textContent = 'No access_token found in URL hash.';
-      expiryTimeElement.textContent = ''; // Clear expiry text if no token
     }
+
+    updateTokenExpiryStatus(); // Call on page load
+
+    // Add event listener for visibility change
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        updateTokenExpiryStatus();
+      }
+    });
 
     // Copy token to clipboard on click
     tokenBox.addEventListener('click', () => {
