@@ -39,23 +39,40 @@
 <body>
   <h1>🔐 Access Token</h1>
   <div id="tokenBox">Loading token...</div>
+  <p id="token-expiry-time" style="font-size: small; margin-top: 10px;"></p>
 
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script>
-    // Extract access_token from location.hash
-    function getAccessTokenFromHash() {
+    // Extract access_token and expires_in from location.hash
+    function getTokenDataFromHash() {
       const hash = window.location.hash.substring(1); // Remove the '#'
       const params = new URLSearchParams(hash);
-      return params.get('access_token');
+      return {
+        accessToken: params.get('access_token'),
+        expiresIn: params.get('expires_in')
+      };
     }
 
     const tokenBox = document.getElementById('tokenBox');
-    const accessToken = getAccessTokenFromHash();
+    const { accessToken, expiresIn } = getTokenDataFromHash();
 
     if (accessToken) {
       tokenBox.textContent = accessToken;
     } else {
       tokenBox.textContent = 'No access_token found in URL hash.';
+    }
+
+    if (expiresIn) {
+      const now = new Date();
+      const expiryTime = new Date(now.getTime() + expiresIn * 1000);
+      const hours = expiryTime.getHours().toString().padStart(2, '0');
+      const minutes = expiryTime.getMinutes().toString().padStart(2, '0');
+      const expiryTimeString = `Valid until ${hours}:${minutes}`;
+
+      const expiryTimeElement = document.getElementById('token-expiry-time');
+      if (expiryTimeElement) {
+        expiryTimeElement.textContent = expiryTimeString;
+      }
     }
 
     // Copy token to clipboard on click
