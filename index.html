@@ -43,44 +43,67 @@
 
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
   <script>
+    // Simple hash function for the access token
+    function simpleHash(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash |= 0; // Convert to 32bit integer
+      }
+      return 'token_start_time_' + Math.abs(hash).toString(36);
+    }
+
     // Extract access_token and expires_in from location.hash
     function getTokenDataFromHash() {
       const hash = window.location.hash.substring(1); // Remove the '#'
       const params = new URLSearchParams(hash);
       return {
         accessToken: params.get('access_token'),
-        expiresIn: params.get('expires_in'),
-        state: params.get('state') // Extract start_time from 'state'
+        expiresIn: params.get('expires_in')
+        // state: params.get('state') // 'state' is no longer used for start_time
       };
     }
 
     const tokenBox = document.getElementById('tokenBox');
-    // Destructure state (as startTime) along with accessToken and expiresIn
-    const { accessToken, expiresIn, state: startTime } = getTokenDataFromHash();
+    const expiryTimeElement = document.getElementById('token-expiry-time'); // Renamed from 'valid_until' for consistency with existing id
+    const { accessToken, expiresIn } = getTokenDataFromHash();
 
     if (accessToken) {
       tokenBox.textContent = accessToken;
+
+      if (expiresIn) {
+        const tokenKey = simpleHash(accessToken);
+        let startTimeMs = localStorage.getItem(tokenKey);
+
+        if (!startTimeMs) {
+          startTimeMs = Date.now();
+          localStorage.setItem(tokenKey, startTimeMs.toString());
+        } else {
+          startTimeMs = parseInt(startTimeMs, 10);
+        }
+
+        const expiresInMs = parseInt(expiresIn, 10) * 1000;
+        const validUntil = new Date(startTimeMs + expiresInMs);
+        const now = new Date();
+
+        const hours = validUntil.getHours().toString().padStart(2, '0');
+        const minutes = validUntil.getMinutes().toString().padStart(2, '0');
+
+        if (validUntil > now) {
+          expiryTimeElement.textContent = `Valid until ${hours}:${minutes}`;
+          expiryTimeElement.style.color = 'green';
+        } else {
+          expiryTimeElement.textContent = `Expired on ${hours}:${minutes}`;
+          expiryTimeElement.style.color = 'red';
+        }
+      } else {
+        expiryTimeElement.textContent = 'expires_in not found in URL hash.';
+        expiryTimeElement.style.color = 'orange';
+      }
     } else {
       tokenBox.textContent = 'No access_token found in URL hash.';
-    }
-
-    // Check if expiresIn and startTime (from state) are available
-    if (expiresIn && startTime) {
-      // Convert startTime from string (milliseconds) to number
-      const startTimeMs = parseInt(startTime, 10);
-      // Convert expiresIn from string (seconds) to number (milliseconds)
-      const expiresInMs = parseInt(expiresIn, 10) * 1000;
-
-      // Calculate expiryTime using startTimeMs
-      const expiryTime = new Date(startTimeMs + expiresInMs);
-      const hours = expiryTime.getHours().toString().padStart(2, '0');
-      const minutes = expiryTime.getMinutes().toString().padStart(2, '0');
-      const expiryTimeString = `Valid until ${hours}:${minutes}`;
-
-      const expiryTimeElement = document.getElementById('token-expiry-time');
-      if (expiryTimeElement) {
-        expiryTimeElement.textContent = expiryTimeString;
-      }
+      expiryTimeElement.textContent = ''; // Clear expiry text if no token
     }
 
     // Copy token to clipboard on click
